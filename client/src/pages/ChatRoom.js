@@ -3,8 +3,10 @@ import { useParams } from 'react-router-dom';
 import API from '../api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 export default function ChatRoom() {
+     const navigate = useNavigate();
   const { chatId } = useParams();
   const { dark } = useTheme();
   const { authenticated } = useAuth();
@@ -19,7 +21,7 @@ export default function ChatRoom() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Fetch messages
+  
   const fetchMessages = async () => {
     try {
       const res = await API.get(`/messages/${chatId}`);
@@ -72,7 +74,7 @@ export default function ChatRoom() {
         style={{
           flex: 1,
           overflowY: 'auto',
-          backgroundColor: dark ? '#222' : '#fff',
+          backgroundColor: 1 ? '#222' : '#fff',
           padding: '1rem',
           borderRadius: '6px'
         }}
@@ -85,7 +87,6 @@ export default function ChatRoom() {
         <div>
           {messages.map((msg) => {
   const isMe = msg.senderId?._id === currentUserId;
-
   const align = isMe ? 'flex-end' : 'flex-start';
   const bubbleStyle = {
     maxWidth: '75%',
@@ -93,12 +94,17 @@ export default function ChatRoom() {
     padding: '0.65rem 1rem',
     wordWrap: 'break-word',
     backgroundColor: isMe
-      ? '#DCF8C6'  // ✅ Greenish for me
+      ? '#b1e28bff'
       : dark
-      ? '#444'     // ✅ Dark grey for others in dark mode
-      : '#F1F0F0', // ✅ Light mode color for others
-    color: dark && !isMe ? '#fff' : '#000', // ✅ Text color depending on theme
+      ? '#444'
+      : '#F1F0F0',
+    color: dark && !isMe ? '#fff' : '#000',
   };
+
+  
+  const profileImg =
+    msg.senderId?.avatar ||
+    'https://www.gravatar.com/avatar/?d=mp&f=y'; 
 
   return (
     <div
@@ -111,6 +117,23 @@ export default function ChatRoom() {
         paddingRight: isMe ? '0' : '1rem',
       }}
     >
+     {!isMe && (
+  <img
+    src={profileImg}
+    alt="profile"
+    style={{
+      width: 36,
+      height: 36,
+      borderRadius: '50%',
+      objectFit: 'cover',
+      marginRight: '0.75rem',
+      alignSelf: 'flex-end',
+      background: '#eee',
+      cursor: 'pointer'
+    }}
+     onClick={() => navigate(`/user/${msg.senderId?._id}`)}
+  />
+)}
       <div style={bubbleStyle}>
         <p className="is-size-7 has-text-weight-semibold" style={{ marginBottom: '0.25rem' }}>
           {msg.senderId?.name || 'Unknown'}
@@ -123,6 +146,22 @@ export default function ChatRoom() {
         </p>
         <p className="is-size-6" style={{ marginBottom: 0 }}>{msg.text}</p>
       </div>
+      {isMe && (
+        <img
+         onClick={() => navigate(`/user/${currentUserId}`)}
+          src={profileImg}
+          alt="profile"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            marginLeft: '0.75rem',
+            alignSelf: 'flex-end',
+            background: '#eee',
+          }}
+        />
+      )}
     </div>
   );
 })}

@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+const SocialMediaSchema = new mongoose.Schema({
+  type: String,   
+  url: String     
+});
+
 const UserSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
@@ -9,7 +14,10 @@ const UserSchema = new mongoose.Schema({
   course: String,
   passingYear: Number,
   registrationNumber: String,
-  chats: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }]
+  avatar: String,
+  bio: { type: String, default: '' },
+  socialMedia: [SocialMediaSchema],  // array of social media entries
+  chats: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }],
 });
 
 module.exports = mongoose.model('User', UserSchema);

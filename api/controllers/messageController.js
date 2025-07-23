@@ -26,7 +26,7 @@ exports.sendMessage = async (req, res) => {
 exports.getMessagesByChat = async (req, res) => {
   try {
     const messages = await Message.find({ chatId: req.params.chatId })
-      .populate('senderId', 'name email') // ✅ Include user info
+      .populate('senderId', 'name avatar email') 
       .sort({ timestamp: 1 });
 
     res.json(messages);

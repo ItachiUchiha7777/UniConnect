@@ -1,11 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
+import UserProfile from './pages/UserProfile';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import ChatLayout from './pages/ChatLayout'; // ✅ Use this for both dashboard & chat
 import Navbar from './components/Navbar';
-
+import Settings from './pages/Settings';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -36,6 +36,8 @@ function AppRoutes() {
         path="/"
         element={<Navigate to={authenticated ? '/dashboard' : '/login'} replace />}
       />
+      <Route path="/settings" element={authenticated ? <Settings /> : <Navigate to="/login" />} />
+      <Route path="/user/:userId" element={authenticated ? <UserProfile /> : <Navigate to="/login" />} />
     </Routes>
   );
 }
