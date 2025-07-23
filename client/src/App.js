@@ -24,20 +24,26 @@ function AppRoutes() {
         path="/register"
         element={authenticated ? <Navigate to="/dashboard" replace /> : <Register />}
       />
-      <Route
-        path="/dashboard"
-        element={authenticated ? <ChatLayout /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/chat/:chatId"
-        element={authenticated ? <ChatLayout /> : <Navigate to="/login" replace />}
-      />
+    <Route
+  path="/dashboard"
+  element={authenticated ? <ChatLayout /> : <Navigate to="/login" replace />}
+/>
+<Route
+  path="/chat/:chatId"
+  element={authenticated ? <ChatLayout /> : <Navigate to="/login" replace />}
+/>
       <Route
         path="/"
         element={<Navigate to={authenticated ? '/dashboard' : '/login'} replace />}
       />
-      <Route path="/settings" element={authenticated ? <Settings /> : <Navigate to="/login" />} />
-      <Route path="/user/:userId" element={authenticated ? <UserProfile /> : <Navigate to="/login" />} />
+      <Route
+        path="/settings"
+        element={authenticated ? <Settings /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/user/:userId"
+        element={authenticated ? <UserProfile /> : <Navigate to="/login" />}
+      />
     </Routes>
   );
 }
