@@ -1,9 +1,12 @@
 const Chat = require('../models/Chat');
 
 exports.getUserChats = async (req, res) => {
-  const chats = await Chat.find({ _id: { $in: req.user.chats } });
+  const chats = await Chat.find({ _id: { $in: req.user.chats } })
+    .populate('lastMessage'); 
+
   res.json(chats);
 };
+
 
 exports.getChatById = async (req, res) => {
   const chat = await Chat.findById(req.params.chatId).populate('participants', 'name email');

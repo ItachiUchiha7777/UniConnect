@@ -8,7 +8,7 @@ import Navbar from './components/Navbar';
 import Settings from './pages/Settings';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-
+import Feed from './pages/feed';
 function AppRoutes() {
   const { authenticated, loading } = useAuth();
 
@@ -44,6 +44,7 @@ function AppRoutes() {
         path="/user/:userId"
         element={authenticated ? <UserProfile /> : <Navigate to="/login" />}
       />
+      <Route path="/feed" element={authenticated ? <Feed /> : <Navigate to="/login" />} />
     </Routes>
   );
 }

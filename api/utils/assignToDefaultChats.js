@@ -2,7 +2,7 @@ const Chat = require('../models/Chat');
 
 const assignToDefaultChats = async (user) => {
   const chatNames = [
-    { name: 'Global Chat', type: 'global' },
+    { name: 'LPU', type: 'global' },
     { name: user.course, type: 'course' },
     { name: `${user.course} ${user.passingYear}`, type: 'batch' },
     { name: `${user.state} Students`, type: 'state' }

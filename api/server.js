@@ -4,8 +4,9 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
+const feedRoutes = require('./routes/feedRoutes');
 
-// Load dotenv
+
 dotenv.config();
 
 const authRoutes = require('./routes/authRoutes');
@@ -23,6 +24,7 @@ app.use(cors({
   credentials: true
 }));
 
+app.use('/api/feed', feedRoutes);
 
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);

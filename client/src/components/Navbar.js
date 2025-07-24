@@ -30,18 +30,24 @@ export default function Navbar() {
         <div className="navbar-item buttons">
           {authenticated && (
             <>
-              <Link to="/settings" className="button is-light mr-2">
+              <Link to="/feed" className="button is-light mr-2">
+                <span className="icon">
+                  <i class="fa-solid fa-newspaper"></i>
+                </span>
+                <span>Feed</span>
+              </Link>
+               <Link to="/settings" className="button is-light mr-2">
                 <span className="icon">
                   <i className="fas fa-cog"></i>
                 </span>
-                <span>Settings</span>
+                {/* <span>Settings</span> */}
               </Link>
 
               <button onClick={handleLogout} className="button is-danger">
                 <span className="icon">
                   <i className="fas fa-sign-out-alt"></i>
                 </span>
-                <span>Logout</span>
+                {/* <span>Logout</span> */}
               </button>
             </>
           )}
