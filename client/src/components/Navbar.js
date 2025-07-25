@@ -6,7 +6,7 @@ import API from '../api';
 export default function Navbar() {
   const { authenticated, setAuthenticated } = useAuth();
   const navigate = useNavigate();
-
+const userId = localStorage.getItem('userId');
   const handleLogout = async () => {
     try {
       await API.post('/auth/logout');
@@ -35,6 +35,11 @@ export default function Navbar() {
                   <i class="fa-solid fa-newspaper"></i>
                 </span>
                 <span>Feed</span>
+              </Link>
+               <Link to={`/user/${userId}`} className="button is-light mr-2">
+                <span className="icon">
+                  <i className="fa-solid fa-user"></i>
+                </span>
               </Link>
                <Link to="/settings" className="button is-light mr-2">
                 <span className="icon">
