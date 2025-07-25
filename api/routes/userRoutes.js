@@ -6,7 +6,6 @@ const multer = require('multer');
 const { storage } = require('../utils/cloudinary');
 const upload = multer({ storage });
 
-// Get current user profile
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
@@ -16,7 +15,44 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
-// Update profile info including bio and social media links
+
+router.get('/search', async (req, res) => {
+  try {
+    console.log('Search request received');
+    const { q } = req.query;
+    console.log('Search query:', q);
+    
+    if (!q || q.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query is required'
+      });
+    }
+
+    const regex = new RegExp(q.trim(), 'i');
+    const users = await User.find({
+      $or: [
+        { name: regex },
+        { registrationNumber: regex }
+      ]
+    })
+    .select('name avatar registrationNumber bio _id')
+    .limit(20);
+
+    console.log(`Found ${users.length} users for query: ${q}`);
+
+    
+    res.json(users);
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: err.message
+    });
+  }
+});
+
 router.put('/profile', auth, async (req, res) => {
   const { bio, socialMedia, name, phone, state } = req.body;
   try {
@@ -37,7 +73,7 @@ router.put('/profile', auth, async (req, res) => {
   }
 });
 
-// Upload avatar (profile picture)
+
 router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
   try {
     req.user.avatar = req.file.path;
@@ -48,7 +84,8 @@ router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
     res.status(500).json({ message: 'Avatar upload failed' });
   }
 });
-// Public - Get another user's profile by ID (name, avatar, bio, etc.)
+
+
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');

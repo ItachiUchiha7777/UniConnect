@@ -17,7 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import API from '../api';
+import API from '../api/api';
 
 export default function FeedScreen() {
   const navigation = useNavigation();

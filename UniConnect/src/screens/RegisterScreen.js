@@ -1,7 +1,7 @@
 // src/screens/RegisterScreen.js
 import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import API from '../api';
+import API from '../api/api';
 
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');

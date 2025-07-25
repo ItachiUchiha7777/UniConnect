@@ -1,7 +1,7 @@
 // src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import { View, TextInput, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import API from '../api';
+import API from '../api/api';
 import { useAuth } from '../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

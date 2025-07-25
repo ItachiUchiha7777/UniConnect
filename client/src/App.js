@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Feed from './pages/feed';
+import SearchUserScreen from './pages/Search';
 function AppRoutes() {
   const { authenticated, loading } = useAuth();
 
@@ -27,6 +28,10 @@ function AppRoutes() {
     <Route
   path="/dashboard"
   element={authenticated ? <ChatLayout /> : <Navigate to="/login" replace />}
+/>
+  <Route
+  path="/search"
+  element={authenticated ? <SearchUserScreen /> : <Navigate to="/login" replace />}
 />
 <Route
   path="/chat/:chatId"

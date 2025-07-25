@@ -36,17 +36,26 @@ const userId = localStorage.getItem('userId');
                 </span>
                 <span>Feed</span>
               </Link>
+              <Link to="/search" className="button is-light mr-2">
+                <span className="icon">
+                  <i class="fas fa-search"></i>
+                </span>
+                {/* <span>Settings</span> */}
+              </Link>
                <Link to={`/user/${userId}`} className="button is-light mr-2">
                 <span className="icon">
                   <i className="fa-solid fa-user"></i>
                 </span>
               </Link>
+ 
+
                <Link to="/settings" className="button is-light mr-2">
                 <span className="icon">
                   <i className="fas fa-cog"></i>
                 </span>
                 {/* <span>Settings</span> */}
               </Link>
+             
 
               <button onClick={handleLogout} className="button is-danger">
                 <span className="icon">

@@ -1,4 +1,5 @@
 // src/screens/ChatRoomScreen.js
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -9,10 +10,13 @@ import {
   FlatList,
   StyleSheet,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import API from '../api';
+import API from '../api/api';
 
 export default function ChatRoomScreen({ route, navigation }) {
   const { chatId } = route.params;
@@ -23,7 +27,6 @@ export default function ChatRoomScreen({ route, navigation }) {
   const [currentUserId, setCurrentUserId] = useState(null);
   const flatListRef = useRef(null);
 
-  // Get current user ID from AsyncStorage
   useEffect(() => {
     const getUserId = async () => {
       try {
@@ -54,7 +57,7 @@ export default function ChatRoomScreen({ route, navigation }) {
 
   useEffect(() => {
     if (!currentUserId) return;
-    
+
     fetchMessages();
     const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
@@ -89,14 +92,14 @@ export default function ChatRoomScreen({ route, navigation }) {
         isMe ? styles.myMessageContainer : styles.theirMessageContainer
       ]}>
         {!isMe && (
-          <TouchableOpacity onPress={() => navigation.navigate('Profile', { userId: message.senderId?._id })}>
+          <TouchableOpacity onPress={() => navigation.navigate('UserPublicProfile', { userId: message.senderId?._id })}>
             <Image
               source={{ uri: profileImg }}
               style={styles.avatar}
             />
           </TouchableOpacity>
         )}
-        
+
         <View style={[
           styles.messageBubble,
           isMe ? styles.myMessageBubble : styles.theirMessageBubble
@@ -113,9 +116,9 @@ export default function ChatRoomScreen({ route, navigation }) {
             {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>
         </View>
-        
+
         {isMe && (
-          <TouchableOpacity onPress={() => navigation.navigate('Profile', { userId: currentUserId })}>
+          <TouchableOpacity onPress={() => navigation.navigate('UserPublicProfile', { userId: currentUserId })}>
             <Image
               source={{ uri: profileImg }}
               style={styles.avatar}
@@ -126,55 +129,74 @@ export default function ChatRoomScreen({ route, navigation }) {
     );
   };
 
+  // Custom empty component that handles keyboard dismissal
+  const EmptyComponent = () => (
+    <TouchableOpacity 
+      activeOpacity={1} 
+      style={styles.emptyContainer}
+      onPress={Keyboard.dismiss}
+    >
+      <Text style={{ color: '#fff' }}>No messages yet. Start the conversation!</Text>
+    </TouchableOpacity>
+  );
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
-        <Text>Loading messages...</Text>
+        <ActivityIndicator size="large" color="#25D366" />
+        <Text style={{ color: '#fff', marginTop: 10 }}>Loading messages...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => <MessageBubble message={item} />}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={scrollToBottom}
-        onLayout={scrollToBottom}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text>No messages yet. Start the conversation!</Text>
-          </View>
-        }
-      />
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Type a message..."
-          placeholderTextColor="#999"
-          value={text}
-          onChangeText={setText}
-          editable={!loading && !sending}
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
-          multiline
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
+      <View style={{ flex: 1 }}>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <MessageBubble message={item} />}
+          contentContainerStyle={styles.messagesList}
+          onContentSizeChange={scrollToBottom}
+          onLayout={scrollToBottom}
+          ListEmptyComponent={<EmptyComponent />}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+          scrollEventThrottle={16}
+          onScrollBeginDrag={Keyboard.dismiss}
         />
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={handleSend}
-          disabled={loading || sending || text.trim() === ''}
-        >
-          <Text style={styles.sendButtonText}>
-            {sending ? '...' : 'Send'}
-          </Text>
-        </TouchableOpacity>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Type a message..."
+            placeholderTextColor="#999"
+            value={text}
+            onChangeText={setText}
+            editable={!loading && !sending}
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            multiline
+            color="#fff"
+          />
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={handleSend}
+            disabled={loading || sending || text.trim() === ''}
+          >
+            <Text style={styles.sendButtonText}>
+              {sending ? '...' : 'Send'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -185,6 +207,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
+    backgroundColor: 'rgb(34, 34, 34)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -193,10 +216,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    minHeight: 400, // Ensure it takes enough space for touch
   },
   messagesList: {
     paddingVertical: 16,
     paddingHorizontal: 12,
+    flexGrow: 1,
+    justifyContent: 'flex-end',
   },
   messageContainer: {
     flexDirection: 'row',
@@ -217,35 +243,38 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     marginHorizontal: 4,
+    backgroundColor: '#444',
   },
   messageBubble: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 16,
     marginHorizontal: 4,
+    maxWidth: 250,
   },
   myMessageBubble: {
-    backgroundColor: '#DCF8C6',
+    backgroundColor: '#25D366',
     borderTopRightRadius: 0,
   },
   theirMessageBubble: {
-    backgroundColor: '#ECECEC',
+    backgroundColor: '#23272A',
     borderTopLeftRadius: 0,
   },
   senderName: {
     fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 4,
-    color: '#555',
+    color: '#5de07a',
   },
   messageText: {
     fontSize: 16,
+    color: '#fff',
   },
   timeText: {
     fontSize: 10,
     alignSelf: 'flex-end',
     marginTop: 4,
-    color: '#666',
+    color: '#bbb',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -259,14 +288,15 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    backgroundColor: 'rgb(34, 34, 34)',
+    backgroundColor: '#23272A',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 8,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(113, 111, 111, 1)',
+    borderColor: '#5de07a',
+    color: '#fff',
   },
   sendButton: {
     backgroundColor: '#25D366',

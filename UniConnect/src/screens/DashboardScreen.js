@@ -1,7 +1,7 @@
 // src/screens/DashboardScreen.js
 import React, { useEffect, useState } from 'react';
 import { FlatList, View, StyleSheet } from 'react-native';
-import API from '../api';
+import API from '../api/api';
 import ChatListItem from '../components/ChatListItem';
 
 export default function DashboardScreen({ navigation }) {

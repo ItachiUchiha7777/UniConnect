@@ -10,7 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import API from '../api';
+import API from '../api/api';
   import * as ImagePicker from 'expo-image-picker';
 
 
@@ -332,6 +332,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     alignItems: 'center',
     marginTop: 14,
+    marginBottom: 23,
   },
   saveButtonText: {
     color: '#181820',

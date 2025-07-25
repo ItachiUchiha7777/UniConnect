@@ -11,7 +11,7 @@ import {
   TouchableOpacity
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-import API from '../api';
+import API from '../api/api';
 import { colors } from '../colors';
 
 const socialIcons = {

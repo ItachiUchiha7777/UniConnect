@@ -12,7 +12,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import UserPublicProfileScreen from '../screens/UserPublicProfileScreen';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
-
+import SearchScreen from '../screens/SearchScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const ChatStack = createStackNavigator();
@@ -55,11 +55,12 @@ function AppTabs() {
         }}
       />
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
+        name="Search"
+        component={SearchScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle" color={color} size={size} />
+            <Ionicons name="search" color={color} size={size} />
+
           ),
         }}
       />
