@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import API from '../api';
-import { launchImageLibrary } from 'react-native-image-picker';
+  import * as ImagePicker from 'expo-image-picker';
+
 
 const SOCIAL_TYPES = [
   { value: 'instagram', label: 'Instagram' },
@@ -77,43 +78,55 @@ export default function SettingsScreen() {
   };
 
   // Avatar picker and upload
-  const handleAvatarChange = async () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        includeBase64: false,
-        quality: 0.8,
-      },
-      async (response) => {
-        if (response.didCancel) return;
-        if (response.errorCode) {
-          Alert.alert('Error', 'Cannot open image picker');
-          return;
-        }
-        if (response.assets && response.assets.length > 0) {
-          setUploadingAvatar(true);
-          const image = response.assets[0];
-          const formData = new FormData();
-          formData.append('avatar', {
-            uri: image.uri,
-            name: image.fileName || 'avatar.jpg',
-            type: image.type || 'image/jpeg',
-          });
-          try {
-            const res = await API.post('/user/avatar', formData, {
-              headers: { 'Content-Type': 'multipart/form-data' },
-            });
-            setProfile({ ...profile, avatar: res.data.avatar });
-          } catch {
-            Alert.alert('Error', 'Failed to upload avatar');
-          } finally {
-            setUploadingAvatar(false);
-          }
-        }
-      }
-    );
-  };
 
+// ... (other imports remain the same)
+
+const handleAvatarChange = async () => {
+  // Request permissions
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('Error', 'Permission to access camera roll is required!');
+    return;
+  }
+
+  try {
+    setUploadingAvatar(true);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled) {
+      setUploadingAvatar(false);
+      return;
+    }
+
+    if (!result.assets || result.assets.length === 0) {
+      setUploadingAvatar(false);
+      return;
+    }
+
+    const image = result.assets[0];
+    const formData = new FormData();
+    formData.append('avatar', {
+      uri: image.uri,
+      name: image.fileName || 'avatar.jpg',
+      type: image.mimeType || 'image/jpeg',
+    } );
+
+    const res = await API.post('/user/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    setProfile({ ...profile, avatar: res.data.avatar });
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    Alert.alert('Error', 'Failed to upload avatar');
+  } finally {
+    setUploadingAvatar(false);
+  }
+};  
   // Save profile handler
   const handleSubmit = async () => {
     setSaving(true);

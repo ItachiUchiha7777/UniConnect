@@ -23,7 +23,8 @@
     "react-native-image-crop-picker": "^0.50.1",
     "react-native-image-picker": "^8.2.1",
     "react-native-paper": "^5.14.5",
-    "react-native-safe-area-context": "^5.5.2"
+    "react-native-safe-area-context": "^5.5.2",
+    "expo-image-picker": "~16.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

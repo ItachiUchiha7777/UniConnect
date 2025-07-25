@@ -1,63 +1,72 @@
 // src/components/FeedPost.js
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function FeedPost({ post }) {
-  const navigation = useNavigation();
-
+export default function FeedPost({ post, onLike }) {
   return (
-    <View style={styles.box}>
-      <TouchableOpacity
-        style={styles.profileRow}
-        onPress={() => navigation.navigate('UserPublicProfile', { userId: post.user._id })}
-      >
+    <View style={styles.container}>
+      
+      <View style={styles.header}>
         <Image
           source={{ uri: post.user.avatar || `https://ui-avatars.com/api/?name=${post.user.name}` }}
           style={styles.avatar}
         />
-        <Text style={styles.name}>{post.user.name}</Text>
-        <Text style={styles.date}>{new Date(post.createdAt).toLocaleString()}</Text>
-      </TouchableOpacity>
-
-      {post.text ? <Text style={styles.text}>{post.text}</Text> : null}
-
-      {post.image ? (
-        <Image source={{ uri: post.image }} style={styles.feedImage} />
-      ) : null}
-
-      <TouchableOpacity style={styles.likeBtn}>
-        <Text style={styles.like}>{post.likes?.length || 0} ❤️</Text>
+        <View>
+          <Text style={styles.userName}>{post.user.name}</Text>
+          <Text style={styles.timestamp}>
+            {new Date(post.createdAt).toLocaleString()}
+          </Text>
+        </View>
+      </View>
+      
+      {post.text && <Text style={styles.text}>{post.text}</Text>}
+      
+      {post.image && (
+        <Image
+          source={{ uri: post.image }}
+          style={styles.postImage}
+          resizeMode="cover"
+        />
+      )}
+      
+      <TouchableOpacity style={styles.likeButton} onPress={onLike}>
+        <Ionicons 
+          name={post.likes?.length ? "heart" : "heart-outline"} 
+          size={20} 
+          color={post.likes?.length ? "#ff375f" : "#fff"} 
+        />
+        <Text style={styles.likeCount}>
+          {post.likes?.length || 0}
+        </Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  box: {
+  container: {
     backgroundColor: '#222',
-    padding: 12,
-    marginBottom: 16,
     borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
   },
-  profileRow: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#333',
-    marginRight: 10,
-  },
-  name: {
-    color: '#fff',
-    fontWeight: 'bold',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 12,
   },
-  date: {
+  userName: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  timestamp: {
     color: '#888',
     fontSize: 12,
   },
@@ -65,17 +74,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 12,
   },
-  feedImage: {
-    borderRadius: 12,
+  postImage: {
     width: '100%',
-    minHeight: 180,
+    aspectRatio: 1,
+    borderRadius: 8,
     marginBottom: 12,
   },
-  likeBtn: {
-    alignSelf: 'flex-start',
+  likeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  like: {
-    color: '#f66',
-    fontWeight: 'bold',
+  likeCount: {
+    color: '#fff',
+    marginLeft: 6,
   },
 });
