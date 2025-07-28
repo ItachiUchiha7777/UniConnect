@@ -36,11 +36,21 @@ app.get('/', (req, res) => res.send('UniConnect API running'));
 
 // Create HTTP server and bind Socket.IO
 const server = http.createServer(app);
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://uni-connect-one.vercel.app'
+];
 const io = new socketio.Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
-    credentials: true,
+    credentials: true
   }
 });
 
