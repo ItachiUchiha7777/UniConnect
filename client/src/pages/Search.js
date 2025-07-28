@@ -1,16 +1,43 @@
-import React, { useState } from 'react';
-import API from '../api';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API from '../api';
+import debounce from 'lodash.debounce';
 
 export default function SearchUserScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [recentSearches, setRecentSearches] = useState([]);
   const navigate = useNavigate();
 
-  const handleSearch = async (text) => {
-    setQuery(text);
+  // Load from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('recentSearches');
+    if (stored) {
+      setRecentSearches(JSON.parse(stored));
+    }
+  }, []);
+
+  // Save to localStorage
+  const addToRecent = (user) => {
+    const updated = [user, ...recentSearches.filter((u) => u._id !== user._id)].slice(0, 10); // Keep 10 max
+    setRecentSearches(updated);
+    localStorage.setItem('recentSearches', JSON.stringify(updated));
+  };
+
+  // Clear recent search
+  const clearRecentSearches = () => {
+    localStorage.removeItem('recentSearches');
+    setRecentSearches([]);
+  };
+
+  const handleUserClick = (user) => {
+    addToRecent(user);
+    navigate(`/user/${user._id}`);
+  };
+
+  const performSearch = async (text) => {
     if (text.trim().length === 0) {
       setResults([]);
       return;
@@ -23,6 +50,7 @@ export default function SearchUserScreen() {
       const response = await API.get(`/user/search?q=${encodeURIComponent(text)}`);
       setResults(response.data);
     } catch (err) {
+      console.error('Search error:', err);
       setError('Failed to search users');
       setResults([]);
     } finally {
@@ -30,8 +58,12 @@ export default function SearchUserScreen() {
     }
   };
 
-  const handleUserClick = (userId) => {
-    navigate(`/user/${userId}`);
+  // Debounced search
+  const debouncedSearch = useCallback(debounce(performSearch, 500), []);
+
+  const handleInputChange = (text) => {
+    setQuery(text);
+    debouncedSearch(text);
   };
 
   return (
@@ -49,7 +81,7 @@ export default function SearchUserScreen() {
                   type="text"
                   placeholder="Search by name or registration number"
                   value={query}
-                  onChange={(e) => handleSearch(e.target.value)}
+                  onChange={(e) => handleInputChange(e.target.value)}
                   autoCorrect="off"
                   autoCapitalize="words"
                 />
@@ -59,7 +91,50 @@ export default function SearchUserScreen() {
               </div>
             </div>
 
-            {/* Loading State */}
+            {/* Clear Recent */}
+            {recentSearches.length > 0 && !query && (
+              <div className="mb-4">
+                <div className="is-flex is-justify-content-space-between is-align-items-center">
+                  <p className="subtitle is-6 mb-1 has-text-grey">Recent Searches</p>
+                  <button className="button is-small is-text has-text-danger" onClick={clearRecentSearches}>
+                    Clear all
+                  </button>
+                </div>
+                <div className="box" style={{ borderRadius: '10px' }}>
+                  {recentSearches.map((user) => (
+                    <div
+                      key={user._id}
+                      className="media is-clickable p-3"
+                      onClick={() => handleUserClick(user)}
+                      style={{ cursor: 'pointer', transition: 'background 0.3s' }}
+                      // onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                      // onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div className="media-left">
+                        <figure className="image is-48x48">
+                          <img
+                            className="is-rounded"
+                            src={
+                              user.avatar ||
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`
+                            }
+                            alt="avatar"
+                          />
+                        </figure>
+                      </div>
+                      <div className="media-content">
+                        <p className="title is-6 mb-0">{user.name}</p>
+                        {user.registrationNumber && (
+                          <p className="subtitle is-7 has-text-info">{user.registrationNumber}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Loading */}
             {loading && (
               <div className="has-text-centered mt-4">
                 <button className="button is-loading is-white is-large is-rounded" disabled>
@@ -68,7 +143,7 @@ export default function SearchUserScreen() {
               </div>
             )}
 
-            {/* Error Notification */}
+            {/* Error */}
             {error && (
               <div className="notification is-danger is-light mt-3">
                 <button className="delete" onClick={() => setError(null)}></button>
@@ -77,11 +152,11 @@ export default function SearchUserScreen() {
             )}
 
             {/* No Results */}
-            {!loading && query.length > 0 && results.length === 0 && (
-              <div className="notification is-warning is-light mt-4 has-text-centered">
+            {/* {!loading && query.length > 0 && results.length === 0 && (
+              <div className="notification  mt-4 has-text-centered">
                 <p>No users found matching your search.</p>
               </div>
-            )}
+            )} */}
 
             {/* Search Results */}
             {!loading && results.length > 0 && (
@@ -89,14 +164,14 @@ export default function SearchUserScreen() {
                 {results.map((user, index) => (
                   <div
                     key={user._id}
-                    className={`media is-clickable p-4 ${index < results.length - 1 ? 'mb-4' : ''}`}
-                    onClick={() => handleUserClick(user._id)}
+                    className="media is-clickable p-4"
+                    onClick={() => handleUserClick(user)}
                     style={{
                       cursor: 'pointer',
                       borderRadius: '8px',
                       transition: 'background 0.3s',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                    // onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')} 
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <div className="media-left">

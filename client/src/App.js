@@ -47,7 +47,8 @@ function AppRoutes() {
       />
       <Route
         path="/user/:userId"
-        element={authenticated ? <UserProfile /> : <Navigate to="/login" />}
+        // element={authenticated ? <UserProfile /> : <Navigate to="/login" /> 
+        element={<UserProfile />}
       />
       <Route path="/feed" element={authenticated ? <Feed /> : <Navigate to="/login" />} />
     </Routes>
