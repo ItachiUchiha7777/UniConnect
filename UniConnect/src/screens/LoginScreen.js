@@ -1,10 +1,17 @@
-// src/screens/LoginScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import API from '../api/api';
 import { useAuth } from '../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 export default function LoginScreen({ navigation }) {
   const { signIn } = useAuth();
@@ -13,74 +20,137 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-  if (!email || !password) return;
+    if (!email || !password) {
+      alert('Please enter both email and password');
+      return;
+    }
 
-  setLoading(true);
-  try {
-   const response = await fetch('http://172.24.107.163:5000/api/auth/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, password }),
-});
-    console.log('Login response:', response);
-    const res = await response.json();
-
-    if (response.ok) {
-      // Assuming response contains userId and name
-      const userId = res.userId || res.user?._id;
-      const name = res.name || res.user?.name;
+    setLoading(true);
+    try {
+      const res = await API.post('/auth/login', { email, password });
+      const userId = res.data.userId || res.data.user?._id;
+      const name = res.data.name || res.data.user?.name;
 
       await AsyncStorage.setItem('userId', userId);
       await AsyncStorage.setItem('name', name);
       signIn({ userId, name });
-    } else {
-      // Handle error response
-      alert(res.message || 'Login failed');
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Login failed';
+      alert(message);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Login failed:', error);
-    alert('Login failed: ' + error.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#999"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <Button title={loading ? 'Logging in...' : 'Login'} onPress={handleLogin} disabled={loading} />
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.registerText}>Don't have an account? Register</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={styles.innerContainer}>
+        <Text style={styles.title}>UniConnect</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#999"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCompleteType="email"
+          textContentType="emailAddress"
+          value={email}
+          onChangeText={setEmail}
+          editable={!loading}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#999"
+          secureTextEntry
+          textContentType="password"
+          autoCapitalize="none"
+          value={password}
+          onChangeText={setPassword}
+          editable={!loading}
+        />
+
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
+          activeOpacity={0.8}
+        >
+          {loading ? (
+            <ActivityIndicator color="#111" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.registerText}>Don't have an account? Register</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111', justifyContent: 'center', padding: 20 },
-  input: {
-    backgroundColor: '#222',
-    color: '#fff',
-    marginBottom: 12,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 44,
+  container: {
+    flex: 1,
+    backgroundColor: '#111',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
-  registerText: { color: '#5de07a', marginTop: 12, textAlign: 'center' },
+  innerContainer: {
+    backgroundColor: '#222',
+    borderRadius: 12,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 8,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#5de07a',
+    textAlign: 'center',
+    marginBottom: 32,
+    fontFamily: 'Poppins', 
+  },
+  input: {
+    backgroundColor: '#333',
+    color: '#fff',
+    height: 48,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  button: {
+    backgroundColor: '#5de07a',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  buttonDisabled: {
+    backgroundColor: '#9de8aa',
+  },
+  buttonText: {
+    color: '#111',
+    fontWeight: 'bold',
+    fontSize: 18,
+    letterSpacing: 1,
+  },
+  registerText: {
+    color: '#5de07a',
+    textAlign: 'center',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
 });

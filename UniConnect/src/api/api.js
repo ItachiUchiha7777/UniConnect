@@ -1,8 +1,8 @@
-// src/api/api.js
+
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://172.24.107.163:5000/api',  // Adjust as needed
+  baseURL: 'http://10.221.241.163:5000/api',  
   withCredentials: true,
 });
 

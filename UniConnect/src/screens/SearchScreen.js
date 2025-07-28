@@ -117,8 +117,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   input: {
-        marginTop: "10%",
-
+    marginTop: "13%",
+    marginHorizontal: 16,
     backgroundColor: colors.surface,
     color: colors.text,
     borderRadius: 20,

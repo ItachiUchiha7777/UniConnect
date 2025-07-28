@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import FeedScreen from '../screens/FeedScreen';
@@ -10,10 +11,13 @@ import ChatRoomScreen from '../screens/ChatRoomScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import UserPublicProfileScreen from '../screens/UserPublicProfileScreen';
+import SearchScreen from '../screens/SearchScreen';
+
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
-import SearchScreen from '../screens/SearchScreen';
-const Stack = createStackNavigator();
+
+const AuthStack = createStackNavigator();
+const AppStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const ChatStack = createStackNavigator();
 
@@ -60,7 +64,6 @@ function AppTabs() {
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" color={color} size={size} />
-
           ),
         }}
       />
@@ -77,28 +80,35 @@ function AppTabs() {
   );
 }
 
+function AuthStackScreen() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Register" component={RegisterScreen} />
+    </AuthStack.Navigator>
+  );
+}
+
+function AppStackScreen() {
+  return (
+    <AppStack.Navigator screenOptions={{ headerShown: false }}>
+      <AppStack.Screen name="AppTabs" component={AppTabs} />
+      <AppStack.Screen name="UserPublicProfile" component={UserPublicProfileScreen} />
+    </AppStack.Navigator>
+  );
+}
+
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return null; // Or splash screen
+    // You can return a splash screen or loading indicator here
+    return null;
   }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
-          <>
-            <Stack.Screen name="AppTabs" component={AppTabs} />
-            <Stack.Screen name="UserPublicProfile" component={UserPublicProfileScreen} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-          </>
-        )}
-      </Stack.Navigator>
+      {user ? <AppStackScreen /> : <AuthStackScreen />}
     </NavigationContainer>
   );
 }

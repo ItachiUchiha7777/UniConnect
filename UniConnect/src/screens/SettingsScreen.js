@@ -9,10 +9,12 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
+import { useAuth } from '../contexts/AuthContext';
 import API from '../api/api';
-  import * as ImagePicker from 'expo-image-picker';
-
+import * as ImagePicker from 'expo-image-picker';
 
 const SOCIAL_TYPES = [
   { value: 'instagram', label: 'Instagram' },
@@ -23,6 +25,8 @@ const SOCIAL_TYPES = [
 ];
 
 export default function SettingsScreen() {
+  const { signOut } = useAuth();
+
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -35,7 +39,6 @@ export default function SettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // Fetch profile info on mount
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -56,7 +59,6 @@ export default function SettingsScreen() {
     fetchProfile();
   }, []);
 
-  // Handle social media array
   const handleSocialChange = (index, field, value) => {
     const newSocial = [...profile.socialMedia];
     newSocial[index] = { ...newSocial[index], [field]: value };
@@ -77,57 +79,47 @@ export default function SettingsScreen() {
     });
   };
 
-  // Avatar picker and upload
-
-// ... (other imports remain the same)
-
-const handleAvatarChange = async () => {
-  // Request permissions
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') {
-    Alert.alert('Error', 'Permission to access camera roll is required!');
-    return;
-  }
-
-  try {
-    setUploadingAvatar(true);
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (result.canceled) {
-      setUploadingAvatar(false);
+  const handleAvatarChange = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Error', 'Permission to access camera roll is required!');
       return;
     }
 
-    if (!result.assets || result.assets.length === 0) {
+    try {
+      setUploadingAvatar(true);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        setUploadingAvatar(false);
+        return;
+      }
+
+      const image = result.assets[0];
+      const formData = new FormData();
+      formData.append('avatar', {
+        uri: image.uri,
+        name: image.fileName || 'avatar.jpg',
+        type: image.mimeType || 'image/jpeg',
+      });
+
+      const res = await API.post('/user/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setProfile({ ...profile, avatar: res.data.avatar });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      Alert.alert('Error', 'Failed to upload avatar');
+    } finally {
       setUploadingAvatar(false);
-      return;
     }
+  };
 
-    const image = result.assets[0];
-    const formData = new FormData();
-    formData.append('avatar', {
-      uri: image.uri,
-      name: image.fileName || 'avatar.jpg',
-      type: image.mimeType || 'image/jpeg',
-    } );
-
-    const res = await API.post('/user/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    setProfile({ ...profile, avatar: res.data.avatar });
-  } catch (error) {
-    console.error('Error uploading avatar:', error);
-    Alert.alert('Error', 'Failed to upload avatar');
-  } finally {
-    setUploadingAvatar(false);
-  }
-};  
-  // Save profile handler
   const handleSubmit = async () => {
     setSaving(true);
     try {
@@ -144,95 +136,121 @@ const handleAvatarChange = async () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Profile Settings</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1 }}
+    >
+      <ScrollView style={styles.container}>
+        <Text style={styles.header}>Profile Settings</Text>
 
-      {/* Avatar Section */}
-      <View style={styles.section}>
-        <Image
-          source={{
-            uri:
-              profile.avatar ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=222222&color=5de07a`,
+        {/* Avatar */}
+        <View style={styles.section}>
+          <Image
+            source={{
+              uri:
+                profile.avatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  profile.name
+                )}&background=222222&color=5de07a`,
+            }}
+            style={styles.avatar}
+          />
+          <TouchableOpacity
+            style={styles.avatarButton}
+            onPress={handleAvatarChange}
+            disabled={uploadingAvatar}
+          >
+            {uploadingAvatar ? (
+              <ActivityIndicator color="#5de07a" />
+            ) : (
+              <Text style={styles.avatarButtonText}>Change Avatar</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Read-only info */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Name</Text>
+          <TextInput style={styles.input} value={profile.name} editable={false} />
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput style={styles.input} value={profile.email} editable={false} />
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.label}>Phone</Text>
+          <TextInput style={styles.input} value={profile.phone} editable={false} />
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.label}>State</Text>
+          <TextInput style={styles.input} value={profile.state} editable={false} />
+        </View>
+
+        {/* Editable Bio */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Bio</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={profile.bio}
+            onChangeText={text => setProfile({ ...profile, bio: text })}
+            placeholder="Tell us about yourself..."
+            placeholderTextColor="#888"
+            multiline
+          />
+        </View>
+
+        {/* Social Media Links */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Social Media Links</Text>
+          {profile.socialMedia.map((sm, idx) => (
+            <View key={idx} style={styles.socialRow}>
+              <TextInput
+                style={[styles.input, styles.socialPlatform]}
+                placeholder="Platform (e.g. Twitter)"
+                value={sm.type}
+                onChangeText={text => handleSocialChange(idx, 'type', text)}
+                placeholderTextColor="#888"
+              />
+              <TextInput
+                style={[styles.input, styles.socialUrl]}
+                placeholder="Profile URL"
+                value={sm.url}
+                onChangeText={text => handleSocialChange(idx, 'url', text)}
+                placeholderTextColor="#888"
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+              <TouchableOpacity onPress={() => removeSocial(idx)} style={styles.removeSocialButton}>
+                <Text style={styles.removeText}>×</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+          <TouchableOpacity style={styles.addButton} onPress={addSocial}>
+            <Text style={styles.addButtonText}>+ Add Social Link</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Save Button */}
+        <TouchableOpacity style={styles.saveButton} onPress={handleSubmit} disabled={saving}>
+          <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
+        </TouchableOpacity>
+
+        {/* Logout Button */}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={async () => {
+            try {
+              await signOut();
+              // No navigation reset here, relies on auth flow updating navigator
+            } catch (err) {
+              Alert.alert('Logout failed', 'Please try again.');
+            }
           }}
-          style={styles.avatar}
-        />
-        <TouchableOpacity style={styles.avatarButton} onPress={handleAvatarChange} disabled={uploadingAvatar}>
-          {uploadingAvatar ? (
-            <ActivityIndicator color="#5de07a" />
-          ) : (
-            <Text style={styles.avatarButtonText}>Change Avatar</Text>
-          )}
+        >
+          <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
-      </View>
-
-      {/* Read-only Fields */}
-      <View style={styles.section}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput style={styles.input} value={profile.name} editable={false} />
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} value={profile.email} editable={false} />
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.label}>Phone</Text>
-        <TextInput style={styles.input} value={profile.phone} editable={false} />
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.label}>State</Text>
-        <TextInput style={styles.input} value={profile.state} editable={false} />
-      </View>
-
-      {/* Editable Bio */}
-      <View style={styles.section}>
-        <Text style={styles.label}>Bio</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={profile.bio}
-          onChangeText={(text) => setProfile({ ...profile, bio: text })}
-          placeholder="Tell us about yourself..."
-          placeholderTextColor="#888"
-          multiline
-        />
-      </View>
-
-      {/* Social Media Links */}
-      <View style={styles.section}>
-        <Text style={styles.label}>Social Media Links</Text>
-        {profile.socialMedia.map((sm, idx) => (
-          <View key={idx} style={styles.socialRow}>
-            <TextInput
-              style={[styles.input, styles.socialPlatform]}
-              placeholder="Platform (e.g. Twitter)"
-              value={sm.type}
-              onChangeText={(text) => handleSocialChange(idx, 'type', text)}
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              style={[styles.input, styles.socialUrl]}
-              placeholder="Profile URL"
-              value={sm.url}
-              onChangeText={(text) => handleSocialChange(idx, 'url', text)}
-              placeholderTextColor="#888"
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-            <TouchableOpacity onPress={() => removeSocial(idx)} style={styles.removeSocialButton}>
-              <Text style={styles.removeText}>×</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-        <TouchableOpacity style={styles.addButton} onPress={addSocial}>
-          <Text style={styles.addButtonText}>+ Add Social Link</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Save Button */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSubmit} disabled={saving}>
-        <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -352,5 +370,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#c0392b',
+    padding: 14,
+    borderRadius: 7,
+    alignItems: 'center',
+    marginTop: 0,
+    marginBottom: 34,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 17,
+    letterSpacing: 1,
   },
 });

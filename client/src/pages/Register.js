@@ -41,8 +41,7 @@ export default function Register() {
         'B.Sc Physics',
         'B.Sc Chemistry',
         'B.Sc Mathematics',
-        'MBBS',
-        'BDS',
+
         'B.Pharm',
         'B.Arch',
         'LLB'

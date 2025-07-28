@@ -10,7 +10,6 @@ export default function Feed() {
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [localLikes, setLocalLikes] = useState({}); // Track likes locally
   const currentUserId = localStorage.getItem('userId')?.trim();
 
   useEffect(() => {
@@ -19,20 +18,13 @@ export default function Feed() {
         const res = await API.get('/feed');
         console.log('Fetched posts:', res.data);
         setPosts(res.data);
-        
-        // Initialize local likes state
-        const initialLikes = {};
-        res.data.forEach(post => {
-          initialLikes[post._id] = post.likes?.includes(currentUserId) || false;
-        });
-        setLocalLikes(initialLikes);
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
     };
     
     fetchPosts();
-  }, [currentUserId]);
+  }, []);
 
   const handlePost = async (e) => {
     e.preventDefault();
@@ -46,10 +38,6 @@ export default function Feed() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setPosts([res.data, ...posts]);
-      setLocalLikes(prev => ({
-        ...prev,
-        [res.data._id]: false // New post starts with no likes
-      }));
       setText('');
       setImage(null);
     } catch (err) {
@@ -62,30 +50,22 @@ export default function Feed() {
 
   const handleLike = async (postId) => {
     try {
-      // Optimistic UI update
-      setLocalLikes(prev => ({
-        ...prev,
-        [postId]: !prev[postId]
-      }));
-      
       const res = await API.post(`/feed/${postId}/like`);
       console.log('Like response:', res.data);
       
-      // Update posts with fresh data from server
-      setPosts(posts =>
-        posts.map(post =>
+      // Update the post with fresh data from database
+      setPosts(currentPosts =>
+        currentPosts.map(post =>
           post._id === postId
-            ? { ...post, likes: res.data.likes }
+            ? { 
+                ...post, 
+                likes: res.data.likes || res.data.post?.likes || []
+              }
             : post
         )
       );
     } catch (err) {
       console.error('Like error:', err);
-      // Revert optimistic update if failed
-      setLocalLikes(prev => ({
-        ...prev,
-        [postId]: !prev[postId]
-      }));
       alert("Couldn't like the post");
     }
   };
@@ -148,8 +128,14 @@ export default function Feed() {
 
         {/* Posts */}
         {posts.map(post => {
-          const isLiked = localLikes[post._id] || false;
-          const likeCount = post.likes?.length || 0;
+          // Get real-time data directly from database (post.likes array)
+          const likesArray = post.likes || [];
+          const likeCount = likesArray.length;
+          
+          // Check if current user liked this post based on database data
+          const isLikedByCurrentUser = likesArray.some(userId => 
+            String(userId).trim() === String(currentUserId).trim()
+          );
           
           return (
             <div className="box mb-4" key={post._id}>
@@ -178,12 +164,12 @@ export default function Feed() {
                 )}
               </div>
               <button
-                className={`button is-small is-rounded ${isLiked ? 'has-background-danger has-text-white' : ''}`}
+                className={`button is-small is-rounded ${isLikedByCurrentUser ? 'has-background-danger has-text-white' : ''}`}
                 onClick={() => handleLike(post._id)}
                 style={{ marginTop: 4 }}
               >
                 <span className="icon is-small">
-                  <i className={`fas fa-heart ${isLiked ? 'has-text-white' : ''}`}></i>
+                  <i className={`fas fa-heart ${isLikedByCurrentUser ? 'has-text-white' : ''}`}></i>
                 </span>
                 <span>{likeCount}</span>
               </button>

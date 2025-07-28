@@ -89,7 +89,7 @@ export default function FeedScreen() {
       await API.post(`/feed/${postId}/like`);
     } catch (err) {
       console.error('Error liking post:', err);
-      // Revert on error
+      
       setPosts(prev => prev.map(post => {
         if (post._id === postId) {
           const alreadyLiked = post.likes?.some(like => like._id === 'current-user-id');
@@ -304,7 +304,7 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
+    paddingTop: "12%",
     backgroundColor: '#111', // Dark background
   },
   listContent: {
