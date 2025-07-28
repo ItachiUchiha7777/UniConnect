@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-
+import API from '../api';
 export default function Register() {
     const { dark } = useTheme();
     const [form, setForm] = useState({
