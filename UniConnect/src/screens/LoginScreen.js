@@ -30,9 +30,10 @@ export default function LoginScreen({ navigation }) {
       const res = await API.post('/auth/login', { email, password });
       const userId = res.data.userId || res.data.user?._id;
       const name = res.data.name || res.data.user?.name;
-
+      const token = res.data.token;
       await AsyncStorage.setItem('userId', userId);
       await AsyncStorage.setItem('name', name);
+      await AsyncStorage.setItem('token', token);
       signIn({ userId, name });
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Login failed';

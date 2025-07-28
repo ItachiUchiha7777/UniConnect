@@ -12,12 +12,59 @@ import {
   Image,
   Text,
   Pressable,
-  ScrollView
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import API from '../api/api';
+
+// Helper component for dynamically sized images according to actual image size
+function AutoHeightImage({ uri, style }) {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const screenWidth = Dimensions.get('window').width - 32; // padding 16 * 2
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (uri) {
+      Image.getSize(
+        uri,
+        (width, height) => {
+          if (!isMounted) return;
+
+          // Calculate height to maintain aspect ratio based on screen width available
+          const ratio = height / width;
+          setDimensions({ width: screenWidth, height: screenWidth * ratio });
+        },
+        (error) => {
+          console.warn('Failed to get image size:', error);
+          // Fallback in case of error: set default height
+          setDimensions({ width: screenWidth, height: 200 });
+        }
+      );
+    }
+
+    return () => { isMounted = false; };
+  }, [uri]);
+
+  if (!uri || dimensions.height === 0) {
+    return (
+      <View style={[style, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="small" color="#aaa" />
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={[style, { width: dimensions.width, height: dimensions.height }]}
+      resizeMode="contain"
+    />
+  );
+}
 
 export default function FeedScreen() {
   const navigation = useNavigation();
@@ -32,9 +79,9 @@ export default function FeedScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch posts with pagination
-  const fetchPosts = useCallback(async (pageNum = 1, refreshing = false) => {
+  const fetchPosts = useCallback(async (pageNum = 1, refreshingFetch = false) => {
     try {
-      if (refreshing) setRefreshing(true);
+      if (refreshingFetch) setRefreshing(true);
       else if (pageNum === 1) setLoadingMore(true);
 
       const res = await API.get(`/feed?page=${pageNum}`);
@@ -47,7 +94,7 @@ export default function FeedScreen() {
     } catch (err) {
       console.error('Error fetching feed:', err);
     } finally {
-      if (refreshing) setRefreshing(false);
+      if (refreshingFetch) setRefreshing(false);
       else if (pageNum === 1) setLoadingMore(false);
     }
   }, []);
@@ -71,7 +118,7 @@ export default function FeedScreen() {
 
   const handleLike = async (postId) => {
     try {
-      // Optimistic update
+      // Optimistic UI update
       setPosts(prev => prev.map(post => {
         if (post._id === postId) {
           const alreadyLiked = post.likes?.some(like => like._id === 'current-user-id');
@@ -89,7 +136,7 @@ export default function FeedScreen() {
       await API.post(`/feed/${postId}/like`);
     } catch (err) {
       console.error('Error liking post:', err);
-      
+      // Revert optimistic update on failure
       setPosts(prev => prev.map(post => {
         if (post._id === postId) {
           const alreadyLiked = post.likes?.some(like => like._id === 'current-user-id');
@@ -110,7 +157,7 @@ export default function FeedScreen() {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [3, 4],
       quality: 1,
     });
 
@@ -182,10 +229,9 @@ export default function FeedScreen() {
             {item.text && <Text style={styles.postText}>{item.text}</Text>}
             
             {item.image && (
-              <Image
-                source={{ uri: item.image }}
+              <AutoHeightImage
+                uri={item.image}
                 style={styles.postImage}
-                resizeMode="cover"
               />
             )}
 
@@ -257,7 +303,7 @@ export default function FeedScreen() {
                 placeholder="What's happening? (Text or news, up to 280 chars)"
                 placeholderTextColor="#888"
                 multiline
-                numberOfLines={4}
+                numberOfLines={2}
                 maxLength={280}
                 value={postText}
                 onChangeText={setPostText}
@@ -351,10 +397,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   postImage: {
-    width: '100%',
-    height: 200,
     borderRadius: 6,
     marginBottom: 12,
+    backgroundColor: '#000', // Prevent flash while loading
   },
   postFooter: {
     flexDirection: 'row',
@@ -409,11 +454,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   postInput: {
+    marginTop:2,
     backgroundColor: '#333', // Dark input background
     borderRadius: 4,
     padding: 12,
     color: '#fff', // White text
-    minHeight: 120,
+    minHeight: 80,
     marginBottom: 16,
     textAlignVertical: 'top',
     borderWidth: 1,
@@ -421,7 +467,7 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: '100%',
-    height: 200,
+    aspectRatio: 4 / 3,
     borderRadius: 6,
     marginBottom: 16,
   },

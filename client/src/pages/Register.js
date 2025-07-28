@@ -62,24 +62,14 @@ export default function Register() {
         setLoading(true);
         
         try {
-            const res = await fetch('http://localhost:5000/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(form)
-            });
-            
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Registration failed');
-            }
-            
-            navigate('/dashboard');
-        } catch (e) {
-            alert('Registration failed: ' + e.message);
-        } finally {
-            setLoading(false);
-        }
+  const res = await API.post('/auth/register', form); 
+  navigate('/dashboard');
+} catch (e) {
+  const errorMessage = e.response?.data?.message || 'Registration failed';
+  alert('Registration failed: ' + errorMessage);
+} finally {
+  setLoading(false);
+}
     };
 
     const getFieldLabel = (field) => {
