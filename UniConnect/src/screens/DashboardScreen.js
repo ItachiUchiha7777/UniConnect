@@ -8,8 +8,15 @@ export default function DashboardScreen({ navigation }) {
   const [chats, setChats] = useState([]);
 
   useEffect(() => {
-    API.get('/chats/user').then(res => setChats(res.data));
-  }, []);
+  API.get('/chats/user')
+    .then(res => {
+      console.log('Chats response:', res.data);
+      setChats(res.data);
+    })
+    .catch(err => {
+      console.error('Failed to fetch chats:', err);
+    });
+}, []);
 
   return (
     <View style={styles.container}>

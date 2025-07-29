@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.webp",
       "resizeMode": "cover",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#111"
     },
     "ios": {
       "supportsTablet": true
@@ -20,10 +20,16 @@
         "foregroundImage": "./assets/adaptive-icon.webp",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.rohitgusain.UniConnect"
     },
     "web": {
       "favicon": "./assets/favicon.webp"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "35dd3444-972f-4f4b-aa60-00421d907a3e"
+      }
     }
   }
 }

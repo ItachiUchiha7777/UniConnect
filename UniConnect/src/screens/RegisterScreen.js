@@ -79,14 +79,15 @@ const years = Array.from({ length: 15 }, (_, i) => ({
   value: `${currentYear - 7 + i}`,
 }));
 
-const renderDropdownItem = (item, selected) => (
+const renderDropdownItem = (item, selected, onPress) => (  // Added onPress parameter
   <Pressable
+    onPress={onPress}  // Added onPress handler
     style={({ pressed }) => [
       {
         backgroundColor: pressed
           ? '#222'
           : selected
-            ? colors.primary + '33' // light highlight
+            ? colors.primary + '33'
             : colors.surface,
         paddingVertical: 10,
         paddingHorizontal: 12,
@@ -98,7 +99,6 @@ const renderDropdownItem = (item, selected) => (
     </Text>
   </Pressable>
 );
-
 export default function RegisterScreen({ navigation }) {
   const [form, setForm] = useState({
     name: '',
@@ -144,13 +144,14 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
       style={styles.keyboardAvoiding}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      keyboardVerticalOffset={0} // Fix: removes extra space
     >
       <ScrollView
         contentContainerStyle={[styles.container, { paddingBottom: 60 }]}
         keyboardShouldPersistTaps="handled"
+        style={{ flex: 1, backgroundColor: colors.background }} // Ensures proper layout
       >
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join our student community today</Text>
@@ -207,59 +208,61 @@ export default function RegisterScreen({ navigation }) {
         />
 
         <Text style={styles.label}>State *</Text>
-        <Dropdown
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={states}
-          // search
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder="Select State"
-          searchPlaceholder="Search..."
-          value={form.state}
-          onChange={item => handleChange('state', item.value)}
-          renderItem={item => renderDropdownItem(item, form.state === item.value)}
-        />
+<Dropdown
+  style={[styles.dropdown, { zIndex: 300 }]}
+  placeholderStyle={styles.placeholderStyle}
+  selectedTextStyle={styles.selectedTextStyle}
+  inputSearchStyle={styles.inputSearchStyle}
+  iconStyle={styles.iconStyle}
+  data={states}
+  search
+  maxHeight={300}
+  labelField="label"
+  valueField="value"
+  placeholder="Select State"
+  searchPlaceholder="Search..."
+  value={form.state}
+  onChange={item => handleChange('state', item.value)}
+  flatListProps={{ keyboardShouldPersistTaps: 'always' }}
+/>
 
-        <Text style={styles.label}>Course *</Text>
-        <Dropdown
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={courses}
-          search
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder="Select Course"
-          searchPlaceholder="Search..."
-          value={form.course}
-          onChange={item => handleChange('course', item.value)}
-          renderItem={item => renderDropdownItem(item, form.course === item.value)}
-        />
+<Text style={styles.label}>Course *</Text>
+<Dropdown
+  style={[styles.dropdown, { zIndex: 200 }]}
+  placeholderStyle={styles.placeholderStyle}
+  selectedTextStyle={styles.selectedTextStyle}
+  inputSearchStyle={styles.inputSearchStyle}
+  iconStyle={styles.iconStyle}
+  data={courses}
+  search
+  maxHeight={300}
+  labelField="label"
+  valueField="value"
+  placeholder="Select Course"
+  searchPlaceholder="Search..."
+  value={form.course}
+  onChange={item => handleChange('course', item.value)}
+  flatListProps={{ keyboardShouldPersistTaps: 'always' }}
+/>
 
-        <Text style={styles.label}>Passing Year *</Text>
-        <Dropdown
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyleNoBorder} // no border here
-          iconStyle={styles.iconStyle}
-          data={years}
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder="Select Passing Year"
-          value={form.passingYear}
-          onChange={item => handleChange('passingYear', item.value)}
-          renderItem={item => renderDropdownItem(item, form.passingYear === item.value)}
-        />
+<Text style={styles.label}>Passing Year *</Text>
+<Dropdown
+  style={[styles.dropdown, { zIndex: 100 }]}
+  placeholderStyle={styles.placeholderStyle}
+  selectedTextStyle={styles.selectedTextStyle}
+  inputSearchStyle={styles.inputSearchStyleNoBorder}
+  iconStyle={styles.iconStyle}
+  data={years}
+  search
+  maxHeight={300}
+  labelField="label"
+  valueField="value"
+  placeholder="Select Passing Year"
+  searchPlaceholder="Search..."
+  value={form.passingYear}
+  onChange={item => handleChange('passingYear', item.value)}
+  flatListProps={{ keyboardShouldPersistTaps: 'always' }}
+/>
 
         <View style={styles.buttonContainer}>
           {loading ? (
@@ -282,7 +285,6 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-
 const styles = StyleSheet.create({
   keyboardAvoiding: {
     flex: 1,
@@ -291,6 +293,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 0,
+    flexGrow: 1,
   },
   input: {
     backgroundColor: colors.surface,
@@ -308,6 +311,19 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: 12,
     fontWeight: 'bold',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 18,
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 18,
+    textAlign: 'center',
   },
   dropdown: {
     height: 44,
@@ -332,9 +348,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#444'  // keeps border for search input to differentiate
+    borderColor: '#444'
   },
-  // No border variant for search input to remove white border (you can adjust)
   inputSearchStyleNoBorder: {
     height: 40,
     fontSize: 16,
