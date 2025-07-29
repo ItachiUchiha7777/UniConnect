@@ -1,10 +1,16 @@
 const Chat = require('../models/Chat');
 
 exports.getUserChats = async (req, res) => {
-  const chats = await Chat.find({ _id: { $in: req.user.chats } })
-    .populate('lastMessage'); 
+  try {
+    const chats = await Chat.find({ participants: req.user._id }) 
+      .populate('lastMessage')
+      .sort({ updatedAt: -1 });
 
-  res.json(chats);
+    res.json(chats);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 
